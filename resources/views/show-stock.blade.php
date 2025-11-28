@@ -210,6 +210,11 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">ราคาต่อชิ้น</label>
+                        <input type="number" name="priceUnite" class="form-control" min="0" required>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">รหัสสินค้า</label>
                         <input type="text" name="product_code" class="form-control" required>
                     </div>

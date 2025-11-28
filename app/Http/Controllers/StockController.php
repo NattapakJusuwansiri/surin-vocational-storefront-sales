@@ -95,7 +95,7 @@ class StockController extends Controller
 
         $stock = Stock::findOrFail($id);
         $quantity = $request->quantity;
-
+        $priceUnite = $request->priceUnite;
         // คำนวณจำนวนชิ้นจริง
         switch ($request->unit_type) {
             case 'pack':
@@ -147,6 +147,7 @@ class StockController extends Controller
             'quantity_front' => 0,
             'quantity_back' => $request->quantity,
             'product_code' => $request->product_code,
+            'price' => $request->priceUnite,
         ]);
 
         $barcodeFolder = 'public/barcode/' . $stock->id;
