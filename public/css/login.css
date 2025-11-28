@@ -1,0 +1,43 @@
+body {
+    background-image: url("../img/Login/BG.jpg");
+    background-size: cover;
+    background-position: bottom;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.login-img {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-card {
+        justify-content: center;
+    align-items: center;
+    display: flex;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
+}
+
+.btn-login-img {
+    background: transparent;
+    border: none;
+    padding: 0;
+    transition: all 0.3s ease;
+}
+
+.btn-login-img:hover {
+    transform: scale(1.03);
+}
+
+.header-text img {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+}
