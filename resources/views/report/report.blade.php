@@ -23,7 +23,7 @@
                 <input type="date" name="end_date" class="form-control" value="{{ request('end_date', date('Y-m-d')) }}">
             </div>
 
-            <div class="col-md-1">
+            <div class="col-md-2">
                 <label>&nbsp;</label>
                 <button class="btn btn-primary w-100">กรองข้อมูล</button>
             </div>
