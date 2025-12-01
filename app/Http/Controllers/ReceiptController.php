@@ -12,18 +12,18 @@ class ReceiptController extends Controller
     // แสดงหน้า Bill ทั้งหมด
     public function index(Request $request)
     {
-        $year   = $request->year ?? date('Y');
-        $month  = $request->month ?? date('m');
-        $day    = $request->day ?? null; // ✨ เพิ่ม
-        $search = $request->search ?? '';
+        $startDate = $request->start_date;
+        $endDate   = $request->end_date;
+        $search    = $request->search ?? '';
 
-        if ($day) {
-            $date = Carbon::createFromDate($year, $month, $day);
-            $query = BillItem::with('stock')->whereDate('created_at', $date);
-        } else {
-            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            $query = BillItem::with('stock')->whereBetween('created_at', [$start, $end]);
+        $query = BillItem::with('stock');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
         if ($search) {
@@ -41,48 +41,47 @@ class ReceiptController extends Controller
             ];
         })->values();
 
-        return view('bill.bill', compact('data','year','month','day','search'));
+        return view('bill.bill', compact('data', 'startDate', 'endDate', 'search'));
     }
 
-    // ดูรายละเอียดบิลแต่ละใบ
     public function detail(Request $request, $bill_id)
     {
-        $year   = $request->year ?? date('Y');
-        $month  = $request->month ?? date('m');
-        $day    = $request->day ?? null; // ✨ เพิ่ม
+        $startDate = $request->start_date;
+        $endDate   = $request->end_date;
 
         $query = BillItem::with('stock')->where('bill_id', $bill_id);
 
-        if ($day) {
-            $date = Carbon::createFromDate($year, $month, $day);
-            $query->whereDate('created_at', $date);
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
         $items = $query->get();
         $totalPrice = $items->sum(fn($i) => $i->quantity * $i->price);
 
-        // สมมติมีการรับเงินจากลูกค้า
         $paid = $items->first()->bill->paid ?? $totalPrice;
         $change = $paid - $totalPrice;
 
-        return view('bill.detail', compact('items','totalPrice','paid','change','year','month','day'));
+        return view('bill.detail', compact('items','totalPrice','paid','change','startDate','endDate'));
     }
 
-    // Export Excel ของบิลรวม
     public function export(Request $request)
     {
-        $year   = $request->year ?? date('Y');
-        $month  = $request->month ?? date('m');
-        $day    = $request->day ?? null;
-        $search = $request->search ?? '';
+        $startDate = $request->start_date;
+        $endDate   = $request->end_date;
+        $search    = $request->search ?? '';
 
-        if ($day) {
-            $date = Carbon::createFromDate($year, $month, $day);
-            $query = BillItem::with('stock')->whereDate('created_at', $date);
-        } else {
-            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            $query = BillItem::with('stock')->whereBetween('created_at', [$start, $end]);
+        $query = BillItem::with('stock');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
         if ($search) {
@@ -118,10 +117,7 @@ class ReceiptController extends Controller
             $rowNum++;
         }
 
-        $fileName = $day
-            ? "receipts_{$year}_{$month}_{$day}.xlsx"
-            : "receipts_{$year}_{$month}.xlsx";
-
+        $fileName = "receipts_".($startDate ?? 'all')."_to_".($endDate ?? 'all').".xlsx";
         $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(fn() => $writer->save('php://output'), $fileName);
     }
@@ -129,15 +125,17 @@ class ReceiptController extends Controller
     // Export Excel ของบิลแต่ละใบ
     public function exportDetail(Request $request, $bill_id)
     {
-        $year   = $request->year ?? date('Y');
-        $month  = $request->month ?? date('m');
-        $day    = $request->day ?? null;
+        $startDate = $request->start_date;
+        $endDate   = $request->end_date;
 
         $query = BillItem::with('stock')->where('bill_id',$bill_id);
 
-        if ($day) {
-            $date = Carbon::createFromDate($year, $month, $day);
-            $query->whereDate('created_at', $date);
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
         $items = $query->get();
@@ -164,11 +162,10 @@ class ReceiptController extends Controller
         $sheet->setCellValue("C{$rowNum}", "รวมทั้งหมด");
         $sheet->setCellValue("D{$rowNum}", $totalPrice);
 
-        $fileName = $day
-            ? "receipt_detail_{$bill_id}_{$year}_{$month}_{$day}.xlsx"
-            : "receipt_detail_{$bill_id}_{$year}_{$month}.xlsx";
+        $fileName = "receipt_detail_{$bill_id}_".($startDate ?? 'all')."_to_".($endDate ?? 'all').".xlsx";
 
         $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(fn() => $writer->save('php://output'), $fileName);
     }
+
 }

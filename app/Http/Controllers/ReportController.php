@@ -14,25 +14,31 @@ class ReportController extends Controller
 {
     public function categorySummary(Request $request)
     {
-        $year   = $request->year  ?? date('Y');
-        $month  = $request->month ?? date('m');
-        $day    = $request->day   ?? null;
-        $search = $request->search ?? '';
+        $startDate = $request->start_date ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
+        $endDate   = $request->end_date   ? Carbon::parse($request->end_date)->endOfDay()   : Carbon::now()->endOfDay();
+        $search    = $request->search ?? '';
 
-        if ($day) {
-            $fullDate = Carbon::createFromDate($year, $month, $day);
-            $billItems = BillItem::with('stock')
-            ->whereDate('created_at', "{$year}-{$month}-{$day}")
+        $billItems = BillItem::with('stock')
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
-        } else {
-            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            $billItems = BillItem::with('stock')
-            ->whereBetween('created_at', [$start, $end])
-            ->get();
-        }
 
-        $summary = $this->getSummaryData($year, $month, $search, $day);
+        $summary = $billItems
+            ->groupBy(fn($i) => $i->stock->category)
+            ->map(function ($group, $category) use ($search) {
+                if ($search && stripos($category, $search) === false) return null;
+
+                $lastDate = $group->max('created_at')->format('Y-m-d');
+
+                return [
+                    'category' => $category,
+                    'sold'     => $group->sum('quantity'),
+                    'remain'   => Stock::where('category', $category)
+                        ->sum(DB::raw("quantity_front + quantity_back")),
+                    'date'     => $lastDate,
+                ];
+            })
+            ->filter()
+            ->values();
 
         $totalSales = $billItems->sum(fn($i) => $i->quantity * $i->price);
         $totalQuantitySold = $billItems->sum('quantity');
@@ -45,9 +51,8 @@ class ReportController extends Controller
 
         return view('report.report', compact(
             'summary',
-            'month',
-            'year',
-            'day',
+            'startDate',
+            'endDate',
             'search',
             'totalSales',
             'totalQuantitySold',
@@ -96,65 +101,58 @@ class ReportController extends Controller
             ->values();
     }
 
-    private function export($year, $month, $search = '', $day = null)
+    function export(Request $request)
     {
-        if ($day) {
-            // ใช้วันที่จาก created_at โดยไม่ตัดเดือน/ปี
-            $date = Carbon::createFromDate($year, $month, $day);
-            $start = $date->startOfDay();
-            $end   = $date->endOfDay();
-        } else {
-            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-        }
+        $startDate = $request->start_date ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
+        $endDate   = $request->end_date   ? Carbon::parse($request->end_date)->endOfDay()   : Carbon::now()->endOfDay();
 
         $billItems = BillItem::with('stock')
-            ->whereBetween('created_at', [$start, $end])
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
         $summary = $billItems
             ->groupBy(fn($i) => $i->stock->category)
-            ->map(function ($group, $category) use ($year, $month, $day, $search) {
-
-                if ($search && stripos($category, $search) === false) {
-                    return null;
-                }
-
+            ->map(function ($group, $category) {
                 return [
                     'category' => $category,
                     'sold'     => $group->sum('quantity'),
-                    'remain'   => Stock::where('category', $category)
-                        ->sum(DB::raw("quantity_front + quantity_back")),
-                    'date'     => $day ? "$year-$month-$day" : "$year-$month",
+                    'remain'   => Stock::where('category', $category)->sum(DB::raw("quantity_front + quantity_back")),
                 ];
             })
-            ->filter()
             ->values();
 
-        return $summary;
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->setCellValue('A1','หมวดหมู่');
+        $sheet->setCellValue('B1','จำนวนขายออก');
+        $sheet->setCellValue('C1','จำนวนคงเหลือ');
+
+        $rowNum = 2;
+        foreach($summary as $row){
+            $sheet->setCellValue("A{$rowNum}", $row['category']);
+            $sheet->setCellValue("B{$rowNum}", $row['sold']);
+            $sheet->setCellValue("C{$rowNum}", $row['remain']);
+            $rowNum++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = "summary_{$startDate->format('Ymd')}_to_{$endDate->format('Ymd')}.xlsx";
+
+        return response()->streamDownload(fn() => $writer->save('php://output'), $fileName);
     }
+
 
 
     public function categoryDetail(Request $request, $category)
     {
-        $year  = $request->year  ?? date('Y');
-        $month = $request->month ?? date('m');
-        $day   = $request->day   ?? null; // ✨ เพิ่มตรงนี้
+        $startDate = $request->start_date ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
+        $endDate   = $request->end_date   ? Carbon::parse($request->end_date)->endOfDay()   : Carbon::now()->endOfDay();
 
-        if ($day) {
-            $fullDate = Carbon::createFromDate($year, $month, $day);
-            $billItems = BillItem::with('stock')
-            ->whereDate('created_at', "{$year}-{$month}-{$day}")
-            ->whereHas('stock', fn($q) => $q->where('category', $category)) // ✅ ใช้ whereHas
+        $billItems = BillItem::with('stock')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('stock', fn($q) => $q->where('category', $category))
             ->get();
-        } else {
-            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            $billItems = BillItem::with('stock')
-            ->whereBetween('created_at', [$start, $end])
-            ->whereHas('stock', fn($q) => $q->where('category', $category)) // ✅ ใช้ whereHas
-            ->get();
-        }
 
         $detail = $billItems
             ->groupBy(fn($i) => $i->stock->name)
@@ -166,30 +164,18 @@ class ReportController extends Controller
             ])
             ->values();
 
-        return view('report.detail', compact('detail', 'category', 'year', 'month', 'day')); // ✨ ส่ง $day ด้วย
+        return view('report.detail', compact('detail', 'category', 'startDate', 'endDate'));
     }
-
 
     public function exportDetail(Request $request, $category)
     {
-        $year  = $request->year  ?? date('Y');
-        $month = $request->month ?? date('m');
-        $day   = $request->day   ?? null; // ✨ เพิ่มตรงนี้
+        $startDate = $request->start_date ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
+        $endDate   = $request->end_date   ? Carbon::parse($request->end_date)->endOfDay()   : Carbon::now()->endOfDay();
 
-        if ($day) {
-            $fullDate = Carbon::createFromDate($year, $month, $day);
-            $billItems = BillItem::with('stock')
-            ->whereDate('created_at', "{$year}-{$month}-{$day}")
-            ->whereHas('stock', fn($q) => $q->where('category', $category)) // ✅ ใช้ whereHas
+        $billItems = BillItem::with('stock')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('stock', fn($q) => $q->where('category', $category))
             ->get();
-        } else {
-            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            $billItems = BillItem::with('stock')
-            ->whereBetween('created_at', [$start, $end])
-            ->whereHas('stock', fn($q) => $q->where('category', $category)) // ✅ ใช้ whereHas
-            ->get();
-        }
 
         $detail = $billItems
             ->groupBy(fn($i) => $i->stock->name)
@@ -204,26 +190,13 @@ class ReportController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Header
-        $sheet->setCellValue('A1', 'ชื่อสินค้า');
-        $sheet->setCellValue('B1', 'จำนวนขายออก (ชิ้น)');
-        $sheet->setCellValue('C1', 'จำนวนคงเหลือ (ชิ้น)');
-        $sheet->setCellValue('D1', 'ยอดขาย (บาท)');
-
-        $sheet->getStyle('A1:D1')->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'color' => ['rgb' => '1E90FF']],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]],
-        ]);
-
-        foreach (range('A','D') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
+        $sheet->setCellValue('A1','ชื่อสินค้า');
+        $sheet->setCellValue('B1','จำนวนขายออก');
+        $sheet->setCellValue('C1','จำนวนคงเหลือ');
+        $sheet->setCellValue('D1','ยอดขาย');
 
         $rowNum = 2;
-        foreach ($detail as $row) {
+        foreach($detail as $row){
             $sheet->setCellValue("A{$rowNum}", $row['name']);
             $sheet->setCellValue("B{$rowNum}", $row['sold']);
             $sheet->setCellValue("C{$rowNum}", $row['remain']);
@@ -231,12 +204,10 @@ class ReportController extends Controller
             $rowNum++;
         }
 
-        $fileName = "detail_{$category}_{$year}_{$month}.xlsx";
         $writer = new Xlsx($spreadsheet);
+        $fileName = "detail_{$category}_{$startDate->format('Ymd')}_to_{$endDate->format('Ymd')}.xlsx";
 
-        return response()->streamDownload(function () use ($writer) {
-            $writer->save('php://output');
-        }, $fileName);
+        return response()->streamDownload(fn() => $writer->save('php://output'), $fileName);
     }
 
 }

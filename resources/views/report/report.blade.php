@@ -12,55 +12,15 @@
         {{-- ฟิลเตอร์เลือก ปี + เดือน --}}
         <form method="GET" class="row mb-3 g-2 align-items-end">
 
-            <div class="col-md-1">
-                <label>ปี</label>
-                <select name="year" class="form-select">
-                    @php
-                        $currentYear = request('year', date('Y'));
-                    @endphp
-                    @for ($y = date('Y'); $y >= date('Y') - 5; $y--)
-                        <option value="{{ $y }}" {{ $y == $currentYear ? 'selected' : '' }}>
-                            {{ $y }}
-                        </option>
-                    @endfor
-                </select>
+            <div class="col-md-3">
+                <label>เริ่มวันที่</label>
+                <input type="date" name="start_date" class="form-control"
+                    value="{{ request('start_date', date('Y-m-01')) }}">
             </div>
 
             <div class="col-md-3">
-                <label>เดือน</label>
-                <select name="month" class="form-select">
-                    @php
-                        $currentMonth = request('month', date('m'));
-                    @endphp
-                    @for ($m = 1; $m <= 12; $m++)
-                        @php
-                            $value = sprintf('%02d', $m);
-                        @endphp
-                        <option value="{{ $value }}" {{ $value == $currentMonth ? 'selected' : '' }}>
-                            {{ DateTime::createFromFormat('!m', $m)->format('F') }}
-                        </option>
-                    @endfor
-                </select>
-            </div>
-            <div class="col-md-1">
-                <label>วันที่</label>
-                <select name="day" class="form-select">
-                    <option value="">ทั้งหมด</option>
-
-                    @php
-                        $year = request('year', date('Y'));
-                        $month = request('month', date('m'));
-                        $currentDay = request('day');
-                        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-                    @endphp
-
-                    @for ($d = 1; $d <= $daysInMonth; $d++)
-                        @php $value = sprintf('%02d', $d); @endphp
-                        <option value="{{ $value }}" {{ $value == $currentDay ? 'selected' : '' }}>
-                            {{ $d }}
-                        </option>
-                    @endfor
-                </select>
+                <label>สิ้นสุดวันที่</label>
+                <input type="date" name="end_date" class="form-control" value="{{ request('end_date', date('Y-m-d')) }}">
             </div>
 
             <div class="col-md-1">
@@ -177,10 +137,15 @@
                             <td>{{ $row['remain'] }}</td>
                             <td>{{ $row['date'] }}</td>
                             <td>
-                                <a href="{{ route('summary.detail', ['category' => $row['category'], 'year' => $year, 'month' => $month, 'day' => $day]) }}"
+                                <a href="{{ route('summary.detail', [
+                                    'category' => $row['category'],
+                                    'start_date' => request('start_date'),
+                                    'end_date' => request('end_date'),
+                                ]) }}"
                                     class="btn btn-sm btn-info">
                                     ดูรายละเอียด
                                 </a>
+
                             </td>
                         </tr>
                     @empty
