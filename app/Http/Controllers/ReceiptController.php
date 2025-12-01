@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -15,12 +14,17 @@ class ReceiptController extends Controller
     {
         $year   = $request->year ?? date('Y');
         $month  = $request->month ?? date('m');
+        $day    = $request->day ?? null; // ✨ เพิ่ม
         $search = $request->search ?? '';
 
-        $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-        $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-
-        $query = BillItem::with('stock')->whereBetween('created_at', [$start, $end]);
+        if ($day) {
+            $date = Carbon::createFromDate($year, $month, $day);
+            $query = BillItem::with('stock')->whereDate('created_at', $date);
+        } else {
+            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+            $query = BillItem::with('stock')->whereBetween('created_at', [$start, $end]);
+        }
 
         if ($search) {
             $query->whereHas('stock', fn($q) => $q->where('name','like',"%{$search}%"));
@@ -37,21 +41,31 @@ class ReceiptController extends Controller
             ];
         })->values();
 
-        return view('bill.bill', compact('data','year','month','search'));
+        return view('bill.bill', compact('data','year','month','day','search'));
     }
 
     // ดูรายละเอียดบิลแต่ละใบ
-    public function detail($bill_id)
+    public function detail(Request $request, $bill_id)
     {
-        $items = BillItem::with('stock')->where('bill_id', $bill_id)->get();
+        $year   = $request->year ?? date('Y');
+        $month  = $request->month ?? date('m');
+        $day    = $request->day ?? null; // ✨ เพิ่ม
 
+        $query = BillItem::with('stock')->where('bill_id', $bill_id);
+
+        if ($day) {
+            $date = Carbon::createFromDate($year, $month, $day);
+            $query->whereDate('created_at', $date);
+        }
+
+        $items = $query->get();
         $totalPrice = $items->sum(fn($i) => $i->quantity * $i->price);
 
         // สมมติมีการรับเงินจากลูกค้า
         $paid = $items->first()->bill->paid ?? $totalPrice;
         $change = $paid - $totalPrice;
 
-        return view('bill.detail', compact('items','totalPrice','paid','change'));
+        return view('bill.detail', compact('items','totalPrice','paid','change','year','month','day'));
     }
 
     // Export Excel ของบิลรวม
@@ -59,12 +73,17 @@ class ReceiptController extends Controller
     {
         $year   = $request->year ?? date('Y');
         $month  = $request->month ?? date('m');
+        $day    = $request->day ?? null;
         $search = $request->search ?? '';
 
-        $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-        $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-
-        $query = BillItem::with('stock')->whereBetween('created_at', [$start, $end]);
+        if ($day) {
+            $date = Carbon::createFromDate($year, $month, $day);
+            $query = BillItem::with('stock')->whereDate('created_at', $date);
+        } else {
+            $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+            $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+            $query = BillItem::with('stock')->whereBetween('created_at', [$start, $end]);
+        }
 
         if ($search) {
             $query->whereHas('stock', fn($q) => $q->where('name','like',"%{$search}%"));
@@ -99,17 +118,29 @@ class ReceiptController extends Controller
             $rowNum++;
         }
 
-        $fileName = "receipts_{$year}_{$month}.xlsx";
-        $writer = new Xlsx($spreadsheet);
+        $fileName = $day
+            ? "receipts_{$year}_{$month}_{$day}.xlsx"
+            : "receipts_{$year}_{$month}.xlsx";
 
+        $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(fn() => $writer->save('php://output'), $fileName);
     }
 
     // Export Excel ของบิลแต่ละใบ
-    public function exportDetail($bill_id)
+    public function exportDetail(Request $request, $bill_id)
     {
-        $items = BillItem::with('stock')->where('bill_id',$bill_id)->get();
+        $year   = $request->year ?? date('Y');
+        $month  = $request->month ?? date('m');
+        $day    = $request->day ?? null;
 
+        $query = BillItem::with('stock')->where('bill_id',$bill_id);
+
+        if ($day) {
+            $date = Carbon::createFromDate($year, $month, $day);
+            $query->whereDate('created_at', $date);
+        }
+
+        $items = $query->get();
         $totalPrice = $items->sum(fn($i) => $i->quantity * $i->price);
 
         $spreadsheet = new Spreadsheet();
@@ -133,9 +164,11 @@ class ReceiptController extends Controller
         $sheet->setCellValue("C{$rowNum}", "รวมทั้งหมด");
         $sheet->setCellValue("D{$rowNum}", $totalPrice);
 
-        $fileName = "receipt_detail_{$bill_id}.xlsx";
-        $writer = new Xlsx($spreadsheet);
+        $fileName = $day
+            ? "receipt_detail_{$bill_id}_{$year}_{$month}_{$day}.xlsx"
+            : "receipt_detail_{$bill_id}_{$year}_{$month}.xlsx";
 
+        $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(fn() => $writer->save('php://output'), $fileName);
     }
 }

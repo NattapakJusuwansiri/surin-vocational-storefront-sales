@@ -10,7 +10,7 @@
 
         {{-- ปุ่ม Export --}}
         <div class="mb-3 d-flex justify-content-end">
-            <a href="{{ route('summary.exportDetail', ['category' => $category, 'year' => $year, 'month' => $month]) }}"
+            <a href="{{ route('summary.exportDetail', ['category' => $category, 'year' => $year, 'month' => $month, 'day' => $day]) }}"
                 class="btn btn-success btn-sm">
                 Export Excel
             </a>

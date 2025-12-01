@@ -12,7 +12,7 @@
         {{-- ฟิลเตอร์เลือก ปี + เดือน --}}
         <form method="GET" class="row mb-3 g-2 align-items-end">
 
-            <div class="col-md-3">
+            <div class="col-md-1">
                 <label>ปี</label>
                 <select name="year" class="form-select">
                     @php
@@ -42,14 +42,32 @@
                     @endfor
                 </select>
             </div>
+            <div class="col-md-1">
+                <label>วันที่</label>
+                <select name="day" class="form-select">
+                    <option value="">ทั้งหมด</option>
+
+                    @php
+                        $year = request('year', date('Y'));
+                        $month = request('month', date('m'));
+                        $currentDay = request('day');
+                        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+                    @endphp
+
+                    @for ($d = 1; $d <= $daysInMonth; $d++)
+                        @php $value = sprintf('%02d', $d); @endphp
+                        <option value="{{ $value }}" {{ $value == $currentDay ? 'selected' : '' }}>
+                            {{ $d }}
+                        </option>
+                    @endfor
+                </select>
+            </div>
 
             <div class="col-md-1">
                 <label>&nbsp;</label>
                 <button class="btn btn-primary w-100">กรองข้อมูล</button>
             </div>
         </form>
-
-
 
         {{-- การ์ดสรุป --}}
         <div class="row my-4">
@@ -147,7 +165,7 @@
                         <th>หมวดหมู่</th>
                         <th>จำนวนขายทั้งหมด (ชิ้น)</th>
                         <th>จำนวนที่เหลือ (ชิ้น)</th>
-                        <th>เดือน</th>
+                        <th>วันที่</th>
                         <th>จัดการ</th>
                     </tr>
                 </thead>
@@ -157,9 +175,9 @@
                             <td>{{ $row['category'] }}</td>
                             <td>{{ $row['sold'] }}</td>
                             <td>{{ $row['remain'] }}</td>
-                            <td>{{ $row['month'] }}</td>
+                            <td>{{ $row['date'] }}</td>
                             <td>
-                                <a href="{{ route('summary.detail', ['category' => $row['category'], 'year' => $year, 'month' => $month]) }}"
+                                <a href="{{ route('summary.detail', ['category' => $row['category'], 'year' => $year, 'month' => $month, 'day' => $day]) }}"
                                     class="btn btn-sm btn-info">
                                     ดูรายละเอียด
                                 </a>
