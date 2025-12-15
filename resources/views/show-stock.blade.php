@@ -187,7 +187,7 @@
     aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('stock.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="addStockForm">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">เพิ่มสินค้าใหม่</h5>
@@ -197,6 +197,7 @@
                     <div class="mb-3">
                         <label class="form-label">ชื่อสินค้า</label>
                         <input type="text" name="name" class="form-control" required>
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
@@ -217,21 +218,26 @@
                     <div class="mb-3">
                         <label class="form-label">รหัสสินค้า</label>
                         <input type="text" name="product_code" class="form-control" required>
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Barcode หน่วย</label>
-                        <input type="file" name="barcode_unit" class="form-control" required>
+                        <input type="text" name="barcode_unit" class="form-control" required
+                            placeholder="Barcode หน่วย">
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Barcode แพ็ค</label>
-                        <input type="file" name="barcode_pack" class="form-control">
+                        <input type="text" name="barcode_pack" class="form-control" placeholder="Barcode แพ็ค">
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Barcode กล่อง</label>
-                        <input type="file" name="barcode_box" class="form-control">
+                        <input type="text" name="barcode_box" class="form-control" placeholder="Barcode กล่อง">
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -242,3 +248,58 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const form = document.getElementById('addStockForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // reset error
+        form.querySelectorAll('.form-control').forEach(input => {
+            input.classList.remove('is-invalid');
+        });
+        form.querySelectorAll('.invalid-feedback').forEach(div => {
+            div.innerHTML = '';
+        });
+
+        fetch("{{ route('stock.store') }}", {
+            method: "POST",
+            headers: {
+                'X-CSRF-TOKEN': "{{ csrf_token() }}"
+            },
+            body: new FormData(form)
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok) throw data;
+            return data;
+        })
+        .then(() => {
+            bootstrap.Modal
+                .getInstance(document.getElementById('addNewStockModal'))
+                .hide();
+
+            location.reload();
+        })
+        .catch(err => {
+            if (err.errors) {
+                Object.keys(err.errors).forEach(field => {
+                    const input = form.querySelector(`[name="${field}"]`);
+                    if (input) {
+                        input.classList.add('is-invalid');
+                        const feedback = input.parentElement.querySelector('.invalid-feedback');
+                        if (feedback) {
+                            feedback.innerHTML = err.errors[field][0];
+                        }
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+

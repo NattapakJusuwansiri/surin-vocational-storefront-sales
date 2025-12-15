@@ -1,0 +1,17 @@
+{
+    "sarabun": {
+        "normal": "sarabun_normal_f72ee8103ffe673f2f63fd5f2a3f15b5"
+    },
+    "sarabun-bold": {
+        "bold": "D:\\XAMPP\\htdocs\\eservice\\storage\\fonts\/sarabun_bold_bold_829bdc07322b7e89916a70f25501b625",
+        "normal": "sarabun_bold_normal_829bdc07322b7e89916a70f25501b625"
+    },
+    "thsarabunnew": {
+        "normal": "D:\\New folder (2)\\surin-vocational-storefront-sales\\storage\\fonts\/thsarabunnew_normal_9df65af29d80d17c59c2c6e32570c0d5",
+        "bold": "thsarabunnew_bold_e53d2465ec958c40399648a9746b5e92"
+    },
+    "thsarabannew": {
+        "normal": "D:\\New folder (2)\\test-trushsystem\\storage\\fonts\/\/thsarabannew_normal_f72ee8103ffe673f2f63fd5f2a3f15b5",
+        "bold": "thsarabannew_bold_5c6fa4d6f9ea4ba66bcaf7b4c7228f1a"
+    }
+}

@@ -25,8 +25,19 @@
                     </a>
 
                     {{-- ปุ่ม PDF / Tax --}}
-                    <a href="#" class="btn btn-danger btn-sm me-2">Export PDF</a>
-                    <a href="#" class="btn btn-primary btn-sm">Export Tax</a>
+                    <a href="{{ route('receipts.detail.pdf', ['bill_id' => $items->first()->bill_id] + request()->only(['start_date', 'end_date'])) }}"
+                        class="btn btn-danger btn-sm me-2">
+                        Export PDF
+                    </a>
+                    <a href="{{ route(
+                        'receipts.detail.tax',
+                        [
+                            'bill_id' => $items->first()->bill_id,
+                        ] + request()->only(['start_date', 'end_date']),
+                    ) }}"
+                        class="btn btn-primary btn-sm" target="_blank">
+                        Export Tax
+                    </a>
                 </div>
             </div>
         </div>

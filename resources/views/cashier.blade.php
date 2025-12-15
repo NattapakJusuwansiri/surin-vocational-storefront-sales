@@ -36,7 +36,7 @@
 
                     <datalist id="stockList">
                         @foreach ($stocks as $stock)
-                            <option value="{{ $stock->name }}" data-id="{{ $stock->id }}"
+                            <option value="{{ $stock->product_code  }}" data-id="{{ $stock->id }}"
                                 data-category="{{ $stock->category }}" data-price="{{ $stock->price ?? 0 }}">
                         @endforeach
                     </datalist>
@@ -113,7 +113,7 @@
 
         // เมื่อกรอกชื่อจะเลือกสินค้า
         searchInput.addEventListener('input', function() {
-            selectedProduct = stocks.find(stock => stock.name === this.value) || null;
+            selectedProduct = stocks.find(stock => stock.product_code  === this.value) || null;
         });
 
         // รองรับการกด Enter
@@ -129,7 +129,7 @@
             const scanned = this.value.trim();
 
             selectedProduct = stocks.find(stock =>
-                stock.name === scanned ||
+                stock.product_code === scanned ||
                 (stock.barcode && stock.barcode === scanned)
             );
 
@@ -336,7 +336,7 @@
 
             <datalist id="stockList">
                 @foreach ($stocks as $stock)
-                    <option value="{{ $stock->name }}" data-id="{{ $stock->id }}" data-category="{{ $stock->category }}"
+                    <option value="{{ $stock->product_code  }}" data-id="{{ $stock->id }}" data-category="{{ $stock->category }}"
                         data-price="{{ $stock->price ?? 0 }}">
                 @endforeach
             </datalist>
@@ -385,7 +385,7 @@
 
         // เลือกสินค้า
         searchInputMobile.addEventListener('input', function() {
-            selectedProductMobile = stocks.find(stock => stock.name === this.value) || null;
+            selectedProductMobile = stocks.find(stock => stock.product_code  === this.value) || null;
         });
 
         // รองรับ Enter

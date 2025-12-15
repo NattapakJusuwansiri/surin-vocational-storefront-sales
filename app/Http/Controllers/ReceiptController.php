@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\BillItem;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -166,6 +167,71 @@ class ReceiptController extends Controller
 
         $writer = new Xlsx($spreadsheet);
         return response()->streamDownload(fn() => $writer->save('php://output'), $fileName);
+    }
+
+    public function exportPdf(Request $request, $bill_id)
+    {
+        $startDate = $request->start_date;
+        $endDate   = $request->end_date;
+
+        $query = BillItem::with('stock')->where('bill_id', $bill_id);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        $items = $query->get();
+
+        if ($items->isEmpty()) {
+            abort(404);
+        }
+
+        // รวมราคา
+        $totalPrice = $items->sum(fn($i) => $i->quantity * $i->price);
+
+        // ใช้ logic เดียวกับหน้า detail
+        $paid   = $items->first()->bill->paid ?? $totalPrice;
+        $change = $paid - $totalPrice;
+
+        $pdf = Pdf::loadView('pdf.bill', [
+            'items'      => $items,
+            'totalPrice'=> $totalPrice,
+            'paid'      => $paid,
+            'change'    => $change,
+            'bill_id'   => $bill_id,
+        ])->setPaper('A4');
+
+        return $pdf->stream("bill_{$bill_id}.pdf");
+    }
+
+
+    public function exportTax(Request $request, $bill_id)
+    {
+        $items = BillItem::with(['stock','bill'])
+            ->where('bill_id', $bill_id)
+            ->get();
+
+        if ($items->isEmpty()) {
+            abort(404);
+        }
+
+        $totalPrice = $items->sum(fn($i) => $i->quantity * $i->price);
+        $paid = $items->first()->bill->paid ?? $totalPrice;
+        $change = $paid - $totalPrice;
+
+        $pdf = Pdf::loadView('pdf.tax', [
+            'items' => $items,
+            'totalPrice' => $totalPrice,
+            'paid' => $paid,
+            'change' => $change,
+            'bill_id' => $bill_id,
+        ])->setPaper('A4');
+
+        return $pdf->stream("tax_invoice_{$bill_id}.pdf");
     }
 
 }

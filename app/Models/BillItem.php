@@ -14,4 +14,7 @@ class BillItem extends Model
     {
         return $this->belongsTo(Stock::class);
     }
+    public function bill() {
+        return $this->belongsTo(Bill::class);
+    }
 }

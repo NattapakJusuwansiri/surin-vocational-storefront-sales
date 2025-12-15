@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Stock;
 use App\Models\StockMovement;
+use Illuminate\Support\Facades\Validator;
 
 class StockController extends Controller
 {
@@ -130,50 +131,38 @@ class StockController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:stocks,name',
             'category' => 'required|string|max:255',
             'quantity' => 'required|integer|min:0',
-            'product_code' => 'required|string|max:255',
-            'barcode_unit' => 'required|file|mimes:jpg,jpeg,png',
-            'barcode_pack' => 'nullable|file|mimes:jpg,jpeg,png',
-            'barcode_box' => 'nullable|file|mimes:jpg,jpeg,png',
+            'product_code' => 'required|string|max:255|unique:stocks,product_code',
+            'barcode_unit' => 'required|string|unique:stocks,barcode_unit',
+            'barcode_pack' => 'nullable|string|unique:stocks,barcode_pack',
+            'barcode_box' => 'nullable|string|unique:stocks,barcode_box',
         ]);
 
-        // สร้าง stock ก่อน เพื่อให้ได้ id
-        $stock = Stock::create([
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        Stock::create([
             'name' => $request->name,
             'category' => $request->category,
             'quantity_front' => 0,
             'quantity_back' => $request->quantity,
             'product_code' => $request->product_code,
+            'barcode_unit' => $request->barcode_unit,
+            'barcode_pack' => $request->barcode_pack,
+            'barcode_box' => $request->barcode_box,
             'price' => $request->priceUnite,
         ]);
 
-        $barcodeFolder = 'public/barcode/' . $stock->id;
-
-        if ($request->hasFile('barcode_unit')) {
-            $stock->barcode_unit = $request->file('barcode_unit')->store($barcodeFolder);
-        }
-        if ($request->hasFile('barcode_pack')) {
-            $stock->barcode_pack = $request->file('barcode_pack')->store($barcodeFolder);
-        }
-        if ($request->hasFile('barcode_box')) {
-            $stock->barcode_box = $request->file('barcode_box')->store($barcodeFolder);
-        }
-
-        $stock->save();
-
-        // บันทึก movement เริ่มต้น
-        StockMovement::create([
-            'stock_id' => $stock->id,
-            'quantity' => $request->quantity,
-            'from_location' => null,
-            'to_location' => 'back',
-            'unit_type' => 'unit',
+        return response()->json([
+            'success' => true
         ]);
-
-        return redirect()->route('show-stock')->with('success', 'เพิ่มสินค้าใหม่เรียบร้อย!');
     }
+
 
 }

@@ -42,6 +42,12 @@ Route::get('/receipts/export', [ReceiptController::class,'export'])->name('recei
 Route::get('/receipts/{bill_id}/detail', [ReceiptController::class,'detail'])->name('receipts.detail');
 Route::get('/receipts/{bill_id}/detail/export', [ReceiptController::class,'exportDetail'])->name('receipts.detail.export');
 Route::get('receipts/detail/pdf/{bill_id}', [ReceiptController::class, 'exportDetailPdf'])->name('receipts.detail.pdf');
+Route::get(
+    '/receipts/{bill_id}/pdf',
+    [ReceiptController::class, 'exportPdf']
+)->name('receipts.detail.pdf');
+Route::get('/receipts/{bill_id}/tax', [ReceiptController::class, 'exportTax'])
+    ->name('receipts.detail.tax');
 
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
