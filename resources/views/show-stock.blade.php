@@ -83,9 +83,35 @@
         </div>
 
         {{-- Pagination --}}
-        <div class="mt-3 d-flex justify-content-center">
-            {{ $stocks->withQueryString()->links() }}
+        <div class="d-flex justify-content-center">
+            <nav>
+                <ul class="pagination mb-0">
+
+                    {{-- ก่อนหน้า --}}
+                    <li class="page-item {{ $stocks->onFirstPage() ? 'disabled' : '' }}">
+                        <a class="page-link" href="{{ $stocks->previousPageUrl() }}">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+
+                    {{-- เลขหน้า --}}
+                    @foreach ($stocks->getUrlRange(1, $stocks->lastPage()) as $page => $url)
+                        <li class="page-item {{ $page == $stocks->currentPage() ? 'active' : '' }}">
+                            <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                        </li>
+                    @endforeach
+
+                    {{-- ถัดไป --}}
+                    <li class="page-item {{ $stocks->hasMorePages() ? '' : 'disabled' }}">
+                        <a class="page-link" href="{{ $stocks->nextPageUrl() }}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
         </div>
+
     </div>
 @endsection
 
@@ -151,7 +177,8 @@
                         <h5 class="modal-title" id="addStockModalLabel{{ $stock->id }}">
                             เติมสินค้า: {{ $stock->name }}
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <p>จำนวนคงเหลือทั้งหมด: {{ $stock->quantity_front + $stock->quantity_back }}</p>
@@ -250,56 +277,56 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const form = document.getElementById('addStockForm');
-    if (!form) return;
+        const form = document.getElementById('addStockForm');
+        if (!form) return;
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-        // reset error
-        form.querySelectorAll('.form-control').forEach(input => {
-            input.classList.remove('is-invalid');
-        });
-        form.querySelectorAll('.invalid-feedback').forEach(div => {
-            div.innerHTML = '';
-        });
+            // reset error
+            form.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+            form.querySelectorAll('.invalid-feedback').forEach(div => {
+                div.innerHTML = '';
+            });
 
-        fetch("{{ route('stock.store') }}", {
-            method: "POST",
-            headers: {
-                'X-CSRF-TOKEN': "{{ csrf_token() }}"
-            },
-            body: new FormData(form)
-        })
-        .then(async res => {
-            const data = await res.json();
-            if (!res.ok) throw data;
-            return data;
-        })
-        .then(() => {
-            bootstrap.Modal
-                .getInstance(document.getElementById('addNewStockModal'))
-                .hide();
+            fetch("{{ route('stock.store') }}", {
+                    method: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                    },
+                    body: new FormData(form)
+                })
+                .then(async res => {
+                    const data = await res.json();
+                    if (!res.ok) throw data;
+                    return data;
+                })
+                .then(() => {
+                    bootstrap.Modal
+                        .getInstance(document.getElementById('addNewStockModal'))
+                        .hide();
 
-            location.reload();
-        })
-        .catch(err => {
-            if (err.errors) {
-                Object.keys(err.errors).forEach(field => {
-                    const input = form.querySelector(`[name="${field}"]`);
-                    if (input) {
-                        input.classList.add('is-invalid');
-                        const feedback = input.parentElement.querySelector('.invalid-feedback');
-                        if (feedback) {
-                            feedback.innerHTML = err.errors[field][0];
-                        }
+                    location.reload();
+                })
+                .catch(err => {
+                    if (err.errors) {
+                        Object.keys(err.errors).forEach(field => {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input) {
+                                input.classList.add('is-invalid');
+                                const feedback = input.parentElement.querySelector(
+                                    '.invalid-feedback');
+                                if (feedback) {
+                                    feedback.innerHTML = err.errors[field][0];
+                                }
+                            }
+                        });
                     }
                 });
-            }
         });
     });
-});
 </script>
-
