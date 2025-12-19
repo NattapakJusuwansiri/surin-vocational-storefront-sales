@@ -18,35 +18,34 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+Route::middleware(['auth'])->group(function () {
 
-Route::get('/', [CashierController::class, 'index']);
+    Route::get('/', [CashierController::class, 'index']);
+    Route::get('/cashier', [CashierController::class, 'index'])->name('cashier.index');
+    Route::post('/cashier/add', [CashierController::class, 'add'])->name('cashier.add');
 
-Route::get('/show-stock', [StockController::class, 'showStock'])->name('show-stock');
-Route::get('/show-stock/{id}/edit', [StockController::class, 'edit'])->name('stock.edit');
-Route::put('/show-stock/{id}/update-movement', [StockController::class, 'updateMovement'])->name('stock.updateMovement');
-Route::post('/show-stock/{id}/add', [StockController::class, 'addStock'])->name('stock.addStock');
-Route::post('/show-stock/store', [StockController::class, 'store'])->name('stock.store');
+    Route::get('/show-stock', [StockController::class, 'showStock'])->name('show-stock');
+    Route::get('/show-stock/{id}/edit', [StockController::class, 'edit'])->name('stock.edit');
+    Route::put('/show-stock/{id}/update-movement', [StockController::class, 'updateMovement'])->name('stock.updateMovement');
+    Route::post('/show-stock/{id}/add', [StockController::class, 'addStock'])->name('stock.addStock');
+    Route::post('/show-stock/store', [StockController::class, 'store'])->name('stock.store');
 
-Route::get('/cashier', [CashierController::class, 'index'])->name('cashier.index');
-Route::post('/cashier/add', [CashierController::class, 'add'])->name('cashier.add');
+    Route::get('/report', [ReportController::class, 'categorySummary'])->name('report');
+    Route::get('/summary/export', [ReportController::class, 'export'])->name('summary.export');
 
-route::get('/report', [ReportController::class, 'categorySummary'])->name('report');
-Route::get('/summary/export', [ReportController::class, 'export'])->name('summary.export');
-Route::get('/report/summary/detail/{category}', [ReportController::class, 'categoryDetail'])->name('summary.detail');
-Route::get('/report/summary/detail/{category}/export', [ReportController::class, 'exportDetail'])->name('summary.exportDetail');
-
-Route::get('/receipts', [ReceiptController::class,'index'])->name('receipts.index');
-Route::get('/receipts/export', [ReceiptController::class,'export'])->name('receipts.export');
-Route::get('/receipts/{bill_id}/detail', [ReceiptController::class,'detail'])->name('receipts.detail');
-Route::get('/receipts/{bill_id}/detail/export', [ReceiptController::class,'exportDetail'])->name('receipts.detail.export');
-Route::get('receipts/detail/pdf/{bill_id}', [ReceiptController::class, 'exportDetailPdf'])->name('receipts.detail.pdf');
-Route::get(
-    '/receipts/{bill_id}/pdf',
-    [ReceiptController::class, 'exportPdf']
-)->name('receipts.detail.pdf');
-Route::get('/receipts/{bill_id}/tax', [ReceiptController::class, 'exportTax'])
-    ->name('receipts.detail.tax');
-
+    Route::get('/receipts', [ReceiptController::class,'index'])->name('receipts.index');
+    
+    Route::get('/receipts/export', [ReceiptController::class,'export'])->name('receipts.export');
+    Route::get('/receipts/{bill_id}/detail', [ReceiptController::class,'detail'])->name('receipts.detail');
+    Route::get('/receipts/{bill_id}/detail/export', [ReceiptController::class,'exportDetail'])->name('receipts.detail.export');
+    Route::get('receipts/detail/pdf/{bill_id}', [ReceiptController::class, 'exportDetailPdf'])->name('receipts.detail.pdf');
+    Route::get(
+        '/receipts/{bill_id}/pdf',
+        [ReceiptController::class, 'exportPdf']
+    )->name('receipts.detail.pdf');
+    Route::get('/receipts/{bill_id}/tax', [ReceiptController::class, 'exportTax'])
+        ->name('receipts.detail.tax');
+});
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/reset-password', [ResetPasswordController::class, 'showForm'])->name('password.reset');
