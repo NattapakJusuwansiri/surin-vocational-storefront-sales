@@ -290,11 +290,23 @@
                 .then(data => {
                     if (data.success) {
                         successMsg.textContent = data.success;
+
+                        // 🔥 เปิด PDF + สั่งปริ้น
+                        const pdfUrl = `/receipts/${data.bill_id}/pdf`;
+                        const printWindow = window.open(pdfUrl, '_blank');
+
+                        printWindow.onload = function() {
+                            printWindow.focus();
+                            printWindow.print();
+                        };
+
+                        // reset หน้าจอ
                         items = [];
                         tableBody.innerHTML = '';
                         paidAmountInput.value = '';
                         changeAmountInput.value = '';
                         updateTotal();
+
                     } else if (data.error) {
                         errorMsg.textContent = data.error;
                     }
@@ -516,13 +528,26 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        successMsgMobile.textContent = data.success;
-                        itemsMobile = [];
-                        renderMobileList();
-                        paidInputMobile.value = '';
-                        changeInputMobile.value = '';
+                        successMsg.textContent = data.success;
+
+                        // 🔥 เปิด PDF + สั่งปริ้น
+                        const pdfUrl = `/receipts/${data.bill_id}/pdf`;
+                        const printWindow = window.open(pdfUrl, '_blank');
+
+                        printWindow.onload = function() {
+                            printWindow.focus();
+                            printWindow.print();
+                        };
+
+                        // reset หน้าจอ
+                        items = [];
+                        tableBody.innerHTML = '';
+                        paidAmountInput.value = '';
+                        changeAmountInput.value = '';
+                        updateTotal();
+
                     } else if (data.error) {
-                        errorMsgMobile.textContent = data.error;
+                        errorMsg.textContent = data.error;
                     }
                 });
         });

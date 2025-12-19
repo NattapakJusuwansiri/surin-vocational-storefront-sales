@@ -194,8 +194,8 @@ class ReceiptController extends Controller
         $totalPrice = $items->sum(fn($i) => $i->quantity * $i->price);
 
         // ใช้ logic เดียวกับหน้า detail
-        $paid   = $items->first()->bill->paid ?? $totalPrice;
-        $change = $paid - $totalPrice;
+        $paid   = $items->first()->bill->paid_amount ?? $totalPrice;
+        $change =  $items->first()->bill->change_amount ??$paid - $totalPrice;
 
         $pdf = Pdf::loadView('pdf.bill', [
             'items'      => $items,
@@ -220,8 +220,8 @@ class ReceiptController extends Controller
         }
 
         $totalPrice = $items->sum(fn($i) => $i->quantity * $i->price);
-        $paid = $items->first()->bill->paid ?? $totalPrice;
-        $change = $paid - $totalPrice;
+        $paid = $items->first()->bill->paid_amount ?? $totalPrice;
+        $change = $items->first()->bill->change_amount ?? $paid - $totalPrice;
 
         $pdf = Pdf::loadView('pdf.tax', [
             'items' => $items,
