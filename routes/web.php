@@ -19,9 +19,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [CashierController::class, 'index']);
 
 Route::get('/show-stock', [StockController::class, 'showStock'])->name('show-stock');
 Route::get('/show-stock/{id}/edit', [StockController::class, 'edit'])->name('stock.edit');
