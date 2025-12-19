@@ -137,8 +137,6 @@ class StockController extends Controller
             'quantity' => 'required|integer|min:0',
             'product_code' => 'required|string|max:255|unique:stocks,product_code',
             'barcode_unit' => 'required|string|unique:stocks,barcode_unit',
-            'barcode_pack' => 'nullable|string|unique:stocks,barcode_pack',
-            'barcode_box' => 'nullable|string|unique:stocks,barcode_box',
         ]);
 
         if ($validator->fails()) {
@@ -154,8 +152,8 @@ class StockController extends Controller
             'quantity_back' => $request->quantity,
             'product_code' => $request->product_code,
             'barcode_unit' => $request->barcode_unit,
-            'barcode_pack' => $request->barcode_pack,
-            'barcode_box' => $request->barcode_box,
+            'barcode_pack' => $request->barcode_pack ?? null,
+            'barcode_box' => $request->barcode_box  ?? null,
             'price' => $request->priceUnite,
         ]);
 

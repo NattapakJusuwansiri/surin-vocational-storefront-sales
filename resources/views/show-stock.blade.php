@@ -222,48 +222,47 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">ชื่อสินค้า</label>
+                        <label class="form-label">ชื่อสินค้า</label> <span class="text-danger">*</span>
                         <input type="text" name="name" class="form-control" required>
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">หมวดหมู่สินค้า</label>
+                        <label class="form-label">หมวดหมู่สินค้า</label> <span class="text-danger">*</span>
                         <input type="text" name="category" class="form-control" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">จำนวนเริ่มต้น</label>
+                        <label class="form-label">จำนวนเริ่มต้น</label> <span class="text-danger">*</span>
                         <input type="number" name="quantity" class="form-control" min="0" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">ราคาต่อชิ้น</label>
+                        <label class="form-label">ราคาต่อชิ้น</label> <span class="text-danger">*</span>
                         <input type="number" name="priceUnite" class="form-control" min="0" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">รหัสสินค้า</label>
+                        <label class="form-label">รหัสสินค้า</label> <span class="text-danger">*</span>
                         <input type="text" name="product_code" class="form-control" required>
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Barcode หน่วย</label>
-                        <input type="text" name="barcode_unit" class="form-control" required
-                            placeholder="Barcode หน่วย">
+                        <label class="form-label">Barcode ชิ้น</label> <span class="text-danger">*</span>
+                        <input type="text" name="barcode_unit" class="form-control" required>
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Barcode แพ็ค</label>
-                        <input type="text" name="barcode_pack" class="form-control" placeholder="Barcode แพ็ค">
+                        <input type="text" name="barcode_pack" class="form-control">
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Barcode กล่อง</label>
-                        <input type="text" name="barcode_box" class="form-control" placeholder="Barcode กล่อง">
+                        <input type="text" name="barcode_box" class="form-control">
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>

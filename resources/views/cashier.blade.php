@@ -36,7 +36,7 @@
 
                     <datalist id="stockList">
                         @foreach ($stocks as $stock)
-                            <option value="{{ $stock->product_code  }}" data-id="{{ $stock->id }}"
+                            <option value="{{ $stock->barcode_unit }}" data-id="{{ $stock->id }}"
                                 data-category="{{ $stock->category }}" data-price="{{ $stock->price ?? 0 }}">
                         @endforeach
                     </datalist>
@@ -108,13 +108,27 @@
         const paidAmountInput = document.getElementById('paidAmount');
         const changeAmountInput = document.getElementById('changeAmount');
 
+        function findProduct(value) {
+            value = value.trim();
+
+            return stocks.find(stock =>
+                stock.barcode_unit === value ||
+                stock.barcode_pack === value ||
+                stock.barcode_box === value ||
+                stock.product_code === value ||
+                stock.name === value
+            ) || null;
+        }
+
+
         let selectedProduct = null;
         let items = [];
 
         // เมื่อกรอกชื่อจะเลือกสินค้า
         searchInput.addEventListener('input', function() {
-            selectedProduct = stocks.find(stock => stock.product_code  === this.value) || null;
+            selectedProduct = findProduct(this.value);
         });
+
 
         // รองรับการกด Enter
         searchInput.addEventListener('keydown', function(e) {
@@ -128,10 +142,7 @@
         searchInput.addEventListener('change', function() {
             const scanned = this.value.trim();
 
-            selectedProduct = stocks.find(stock =>
-                stock.product_code === scanned ||
-                (stock.barcode && stock.barcode === scanned)
-            );
+            selectedProduct = findProduct(scanned);
 
             if (selectedProduct) {
                 if (!quantityInput.value) quantityInput.value = 1;
@@ -336,8 +347,8 @@
 
             <datalist id="stockList">
                 @foreach ($stocks as $stock)
-                    <option value="{{ $stock->product_code  }}" data-id="{{ $stock->id }}" data-category="{{ $stock->category }}"
-                        data-price="{{ $stock->price ?? 0 }}">
+                    <option value="{{ $stock->barcode_unit }}" data-id="{{ $stock->id }}"
+                        data-category="{{ $stock->category }}" data-price="{{ $stock->price ?? 0 }}">
                 @endforeach
             </datalist>
         </div>
@@ -385,7 +396,7 @@
 
         // เลือกสินค้า
         searchInputMobile.addEventListener('input', function() {
-            selectedProductMobile = stocks.find(stock => stock.product_code  === this.value) || null;
+            selectedProductMobile = findProduct(this.value);
         });
 
         // รองรับ Enter
