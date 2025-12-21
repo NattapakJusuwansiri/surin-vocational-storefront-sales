@@ -27,7 +27,7 @@
                     {{-- ปุ่ม PDF / Tax --}}
                     <a href="{{ route('receipts.detail.pdf', ['bill_id' => $items->first()->bill_id] + request()->only(['start_date', 'end_date'])) }}"
                         class="btn btn-danger btn-sm me-2">
-                        Export PDF
+                        Export Slip
                     </a>
                     <a href="{{ route(
                         'receipts.detail.tax',
@@ -36,7 +36,7 @@
                         ] + request()->only(['start_date', 'end_date']),
                     ) }}"
                         class="btn btn-primary btn-sm" target="_blank">
-                        Export Tax
+                        Export Bill
                     </a>
                 </div>
             </div>

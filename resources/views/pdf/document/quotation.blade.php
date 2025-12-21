@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>ใบเสร็จรับเงิน</title>
+    <title>ใบเสนอราคา</title>
 
     <style>
         @font-face {
@@ -78,13 +78,6 @@
         tbody tr:last-child td {
             border-bottom: 1px solid #000;
         }
-
-        .total {
-            text-align: right;
-            font-weight: bold;
-            margin-top: 15px;
-            font-size: 20px;
-        }
     </style>
 </head>
 
@@ -94,42 +87,41 @@
         {{-- HEADER --}}
         <div class="top">
             <div class="title">
-                ใบเสร็จรับเงิน
+                ใบเสนอราคา
             </div>
         </div>
 
         <table class="no-border" style="margin-top:10px;">
             <tr>
                 <td>
-                    วันที่: <span class="dotted-line" style="width: 120px; text-align: center;">
-                        {{ $items->first()->created_at->format('d/m/Y') }}
+                    วันที่<span class="dotted-line" style="width: 100px; text-align: center;">
+                        {{ $items->isNotEmpty() ? $items->first()->created_at->format('d/m/Y') : '-' }}
                     </span>
                 </td>
                 <td class="text-right">
-                    เลขที่บิล: <span class="dotted-line" style="width: 100px; text-align: center;">
-                    </span>
+                    เลขที่ <span class="dotted-line" style="width: 35%; text-align: center;">{{ $document->document_no ?? ''}}</span>
                 </td>
             </tr>
         </table>
 
         {{-- SELLER --}}
-        <table class="no-border" style="margin-top:10px;">
+        <table class="no-border">
             <tr>
                 <td>
-                    ชื่อผู้ขาย: <span class="dotted-line" style="width: 85%; text-align: center;">
-                    </span>
+                    ชื่อผู้ขาย
+                    <span class="dotted-line" style="width: 90%; text-align: left; padding-left:10px;">{{ $document->seller_name ?? ''}}</span>
                 </td>
             </tr>
             <tr>
                 <td>
-                    ที่อยู่: <span class="dotted-line" style="width: 90%; text-align: center;">
-                    </span>
+                    ที่อยู่
+                    <span class="dotted-line" style="width: 93%; text-align: left; padding-left:10px;">{{ $document->seller_address ?? ''}}</span>
                 </td>
             </tr>
             <tr>
                 <td>
-                    โทรศัพท์: <span class="dotted-line" style="width: 30%; text-align: center;">
-                    </span>
+                    เบอร์โทรศัพท์
+                    <span class="dotted-line" style="width: 30%; text-align: left; padding-left:10px;">{{ $document->seller_tax_id ?? '' }}</span> 
                 </td>
             </tr>
         </table>
@@ -138,23 +130,20 @@
         <table class="no-border" style="margin-top:10px;">
             <tr>
                 <td>
-                    ชื่อผู้ซื้อ: <span class="dotted-line" style="width: 85%; text-align: center;">
-                        {{ $buyer_name ?? '-' }}
-                    </span>
+                    ชื่อผู้ซื้อ
+                    <span class="dotted-line" style="width: 91%; text-align: left; padding-left:10px;">{{ $document->buyer_name ?? ''}}</span>
                 </td>
             </tr>
             <tr>
                 <td>
-                    ที่อยู่: <span class="dotted-line" style="width: 90%; text-align: center;">
-                        {{ $buyer_address ?? '-' }}
-                    </span>
+                    ที่อยู่
+                    <span class="dotted-line" style="width: 93%; text-align: left; padding-left:10px;">{{ $document->buyer_address ?? ''}}</span>
                 </td>
             </tr>
             <tr>
                 <td>
-                    โทรศัพท์: <span class="dotted-line" style="width: 30%; text-align: center;">
-                        {{ $buyer_phone ?? '-' }}
-                    </span>
+                    เบอร์โทรศัพท์
+                    <span class="dotted-line" style="width: 30%; text-align: left; padding-left:10px;">{{ $document->buyer_tax_id ?? ''}}</span>
                 </td>
             </tr>
         </table>
@@ -175,19 +164,40 @@
                 @foreach ($items as $index => $item)
                     <tr>
                         <td style="text-align:center;">{{ $index + 1 }}</td>
-                        <td>{{ $item->stock->name }}</td>
+                        <td>{{ $item->item_name }}</td>
                         <td style="text-align:center;">{{ $item->quantity }}</td>
                         <td class="text-right">{{ number_format($item->price, 2) }}</td>
-                        <td class="text-right">{{ number_format($item->quantity * $item->price, 2) }}</td>
+                        <td class="text-right">{{ number_format($item->total, 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
-        </table>
 
-        {{-- TOTAL --}}
-        <p class="total">รวมทั้งหมด: {{ number_format($totalPrice, 2) }} ฿</p>
-        <p class="total">ชำระ: {{ number_format($paid, 2) }} ฿</p>
-        <p class="total">เงินทอน: {{ number_format($change, 2) }} ฿</p>
+            @php
+                $vat = round(($totalPrice * 7) / 107, 2);
+                $beforeVat = $totalPrice - $vat;
+            @endphp
+
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-right">
+                        มูลค่ารวมก่อนเสียภาษี
+                        <br>
+                        ภาษีมูลค่าเพิ่ม (VAT)
+                        <br>
+                        <strong>ยอดรวม</strong>
+                    </td>
+                    <td>
+                        <span
+                            style="display:inline-block; width:120px; text-align:right;">{{ number_format($beforeVat, 2) }}</span><br>
+                        <span
+                            style="display:inline-block; width:120px; text-align:right;">{{ number_format($vat, 2) }}</span><br>
+                        <strong><span
+                                style="display:inline-block; width:120px; text-align:right;">{{ number_format($totalPrice, 2) }}</span></strong>
+                    </td>
+                </tr>
+            </tfoot>
+
+        </table>
 
     </div>
 </body>

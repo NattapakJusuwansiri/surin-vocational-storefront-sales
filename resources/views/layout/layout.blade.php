@@ -79,6 +79,12 @@
                             รายการใบเสร็จ
                         </a>
                     </li>
+                    
+                    <li class="nav-item">
+                        <a href="/documents" class="nav-link {{ Str::contains($path, 'documents') ? 'active' : '' }}">
+                            ออกเอกสาร
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- Avatar (เฉพาะ Desktop) -->

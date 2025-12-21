@@ -5,6 +5,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 
@@ -32,6 +33,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/report', [ReportController::class, 'categorySummary'])->name('report');
     Route::get('/summary/export', [ReportController::class, 'export'])->name('summary.export');
+    Route::get('/report/summary/detail/{category}', [ReportController::class, 'categoryDetail'])->name('summary.detail');
+    Route::get('/report/summary/detail/{category}/export', [ReportController::class, 'exportDetail'])->name('summary.exportDetail');
 
     Route::get('/receipts', [ReceiptController::class,'index'])->name('receipts.index');
     
@@ -45,7 +48,21 @@ Route::middleware(['auth'])->group(function () {
     )->name('receipts.detail.pdf');
     Route::get('/receipts/{bill_id}/tax', [ReceiptController::class, 'exportTax'])
         ->name('receipts.detail.tax');
+
+    Route::get('/documents', [DocumentController::class, 'index'])
+        ->name('documents.index');
+    Route::get('/documents/{id}', [DocumentController::class, 'show'])
+        ->name('documents.detail');
+    Route::get('/documents/{id}/pdf', [DocumentController::class, 'pdf'])
+        ->name('documents.pdf');
+    Route::post('/documents/create-from-bill/{bill_id}', 
+        [DocumentController::class, 'createFromBill']
+    )->name('documents.create.from.bill');
+    Route::post('/documents', [DocumentController::class, 'store'])
+    ->name('documents.store');
 });
+
+
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/reset-password', [ResetPasswordController::class, 'showForm'])->name('password.reset');

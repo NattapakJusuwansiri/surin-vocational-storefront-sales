@@ -197,7 +197,7 @@ class ReceiptController extends Controller
         $paid   = $items->first()->bill->paid_amount ?? $totalPrice;
         $change =  $items->first()->bill->change_amount ??$paid - $totalPrice;
 
-        $pdf = Pdf::loadView('pdf.bill', [
+        $pdf = Pdf::loadView('pdf.slip', [
             'items'      => $items,
             'totalPrice'=> $totalPrice,
             'paid'      => $paid,
