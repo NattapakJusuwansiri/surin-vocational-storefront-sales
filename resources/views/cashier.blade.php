@@ -77,9 +77,27 @@
                 </tfoot>
             </table>
         </div>
-
-        {{-- ช่องชำระเงิน --}}
         <div class="row mt-3">
+            <h5>ข้อมูลการชำระเงิน</h5>
+            <div class="row col-md-6">
+                <div class="col-md-6">
+                    <label class="form-label">วิธีชำระเงิน</label>
+                    <select id="payment_type" class="form-select">
+                        <option value="cash">เงินสด</option>
+                        <option value="credit">ขายเชื่อ (สมาชิก)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="member_code" class="form-label">รหัสสมาชิก</label>
+                    <input type="text" id="member_code" class="form-control" placeholder="กรอกรหัสสมาชิก (ถ้ามี)">
+                    <small class="text-muted">
+                        เงินสด: กรอกเพื่อสะสมแต้ม | เครดิต: ต้องกรอก
+                    </small>
+                </div>
+            </div>
+
+            {{-- ช่องชำระเงิน --}}
             <div class="col-md-3">
                 <label for="paidAmount" class="form-label">เงินที่ชำระ</label>
                 <input type="number" id="paidAmount" class="form-control" min="0">
@@ -265,6 +283,14 @@
 
             const paidAmount = parseFloat(paidAmountInput.value) || 0;
             const total = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
+            const paymentType = document.getElementById('payment_type').value;
+            const memberCode = document.getElementById('member_code').value.trim();
+
+            if (paymentType === 'credit' && !memberCode) {
+                errorMsg.textContent = 'ขายเชื่อต้องกรอกรหัสสมาชิก';
+                return;
+            }
+
 
             if (items.length === 0) {
                 errorMsg.textContent = 'ไม่มีสินค้าในบิล';
@@ -283,11 +309,19 @@
                     },
                     body: JSON.stringify({
                         items: items,
-                        paid_amount: paidAmount
+                        paid_amount: paidAmount,
+                        payment_type: paymentType,
+                        member_code: memberCode
                     })
                 })
                 .then(res => res.json())
                 .then(data => {
+                    if (data.error === 'member_not_found') {
+                        document.getElementById('modal_member_code').value = data.member_code;
+                        new bootstrap.Modal(document.getElementById('memberModal')).show();
+                        return;
+                    }
+
                     if (data.success) {
                         successMsg.textContent = data.success;
 
@@ -309,6 +343,29 @@
 
                     } else if (data.error) {
                         errorMsg.textContent = data.error;
+                    }
+                });
+        });
+    </script>
+    <script>
+        document.getElementById('member_code').addEventListener('blur', function() {
+            const code = this.value.trim();
+            if (!code) return;
+
+            fetch(`/members/find/${code}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        member_error.textContent = data.error;
+                        member_error.classList.remove('d-none');
+                        member_info.classList.add('d-none');
+                        member_id.value = '';
+                    } else {
+                        member_info.textContent =
+                            `ชื่อ ${data.name} | เครดิต ${data.credit} บาท`;
+                        member_info.classList.remove('d-none');
+                        member_error.classList.add('d-none');
+                        member_id.value = data.id;
                     }
                 });
         });
@@ -554,3 +611,78 @@
     </script>
 
 @endsection
+
+<!-- Modal เพิ่มสมาชิก -->
+<div class="modal fade" id="memberModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">เพิ่มสมาชิกใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="modal_member_code">
+
+                <div class="mb-3">
+                    <label>ชื่อ–นามสกุล</label>
+                    <input type="text" id="modal_member_name" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label>ประเภท</label>
+                    <select id="modal_member_type" class="form-select">
+                        <option value="student">นักเรียน</option>
+                        <option value="teacher">ครู</option>
+                    </select>
+                </div>
+
+                <div id="modal_error" class="text-danger"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveMemberBtn">
+                    บันทึกสมาชิก
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('saveMemberBtn').addEventListener('click', function() {
+
+        const code = document.getElementById('modal_member_code').value;
+        const name = document.getElementById('modal_member_name').value;
+        const type = document.getElementById('modal_member_type').value;
+
+        fetch("{{ route('members.quickCreate') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    member_code: code,
+                    name: name,
+                    type: type
+                })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    bootstrap.Modal.getInstance(
+                        document.getElementById('memberModal')
+                    ).hide();
+
+                    // ใส่ member_code กลับไป
+                    document.getElementById('member_code').value = code;
+
+                    // กดบันทึกบิลซ้ำอัตโนมัติ
+                    document.getElementById('saveBillBtn').click();
+                }
+            });
+    });
+</script>

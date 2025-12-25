@@ -6,6 +6,8 @@ use App\Http\Controllers\CashierController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\MemberController;
+use App\Http\Controllers\TaxReportController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 
@@ -62,6 +64,23 @@ Route::middleware(['auth'])->group(function () {
     ->name('documents.store');
 });
 
+Route::get('/members/find/{code}', [MemberController::class, 'find']);
+Route::post('/members/quick-create', [MemberController::class, 'quickCreate'])
+    ->name('members.quickCreate');
+
+Route::prefix('debtor')->group(function () {
+
+    // หน้าแสดงรายการลูกหนี้
+    Route::get('/', [MemberController::class, 'debtorIndex'])
+        ->name('debtor.index');
+
+    // ชำระหนี้
+    Route::post('/pay/{member}', [MemberController::class, 'payDebt'])
+        ->name('debtor.pay');
+});
+
+Route::get('/tax', [TaxReportController::class, 'index'])->name('tax.report');
+Route::get('/tax/export', [TaxReportController::class, 'export'])->name('tax.report.export');
 
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

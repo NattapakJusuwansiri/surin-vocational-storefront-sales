@@ -11,7 +11,8 @@ class Bill extends Model
     protected $fillable = [  
         'total',
         'paid_amount',
-        'change_amount'
+        'change_amount',
+        'member_id'
     ];
 
     public function items()

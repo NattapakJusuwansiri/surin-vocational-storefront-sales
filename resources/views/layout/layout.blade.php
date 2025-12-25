@@ -85,6 +85,18 @@
                             ออกเอกสาร
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a href="/debtor" class="nav-link {{ Str::contains($path, 'debtor') ? 'active' : '' }}">
+                            จัดการลูกหนี้
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="/tax" class="nav-link {{ Str::contains($path, 'tax') ? 'active' : '' }}">
+                            จัดการรายงานภาษี
+                        </a>
+                    </li>
                 </ul>
 
                 <!-- Avatar (เฉพาะ Desktop) -->
